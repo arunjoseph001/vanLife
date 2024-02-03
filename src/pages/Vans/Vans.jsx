@@ -1,18 +1,38 @@
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
+import { getVans } from "../../api";
 
 export default function Vans() {
   const [vans, setVans] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const typeFilter = searchParams.get("type");
+
   useEffect(() => {
-    fetch("api/vans")
-      .then((res) => res.json())
-      .then((data) => setVans(data.vans));
+    async function loadVans() {
+      setLoading(true);
+      try {
+        const data = await getVans();
+        setVans(data);
+      } catch (err) {
+        setError(err);
+      } finally {
+        setLoading(false);
+      }
+    }
+    loadVans();
   }, []);
 
-  const vanElements = vans.map((van) => (
+  const displayedVans = typeFilter
+    ? vans.filter((van) => van.type === typeFilter)
+    : vans;
+
+  const vanElements = displayedVans.map((van) => (
     <div key={van.id} className="van-tile">
       <Link
-        to={`/vans/${van.id}`}
+        to={van.id}
+        state={{ search: `?${searchParams.toString()}`, type: typeFilter }}
         aria-label={`View details for ${van.name}, 
                              priced at $${van.price} per day`}
       >
@@ -28,9 +48,63 @@ export default function Vans() {
       </Link>
     </div>
   ));
+
+  function handleFilterChange(key, value) {
+    setSearchParams((prevParams) => {
+      if (value === null) {
+        prevParams.delete(key);
+      } else {
+        prevParams.set(key, value);
+      }
+      return prevParams;
+    });
+  }
+
+  if (loading) {
+    return <h1 aria-live="polite">Loading Vans...</h1>;
+  }
+
+  if (error) {
+    return <h1 aria-live="assertive">There was error:{error.message}</h1>;
+  }
+
   return (
     <div className="van-list-container">
       <h1>Explore our Vans options</h1>
+      <div className="van-list-filter-buttons">
+        <button
+          onClick={() => handleFilterChange("type", "simple")}
+          className={`van-type simple ${
+            typeFilter === "simple" ? "selected" : ""
+          }`}
+        >
+          Simple
+        </button>
+        <button
+          onClick={() => handleFilterChange("type", "luxury")}
+          className={`van-type luxury ${
+            typeFilter === "simple" ? "selected" : ""
+          }`}
+        >
+          Luxury
+        </button>
+        <button
+          onClick={() => handleFilterChange("type", "rugged")}
+          className={`van-type rugged ${
+            typeFilter === "simple" ? "selected" : ""
+          }`}
+        >
+          Rugged
+        </button>
+        {typeFilter ? (
+          <button
+            onClick={() => handleFilterChange("type", null)}
+            className="van-type clear-filters selected"
+          >
+            All
+          </button>
+        ) : null}
+      </div>
       <div className="van-list">{vanElements}</div>
     </div>
   );

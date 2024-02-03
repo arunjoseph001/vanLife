@@ -1,28 +1,33 @@
-import { useEffect, useState } from "react";
-import { Link, useSearchParams } from "react-router-dom";
+// import { useEffect, useState } from "react";
+import { Link, useSearchParams, useLoaderData } from "react-router-dom";
 import { getVans } from "../../api";
 
+export function loader() {
+  return getVans();
+}
+
 export default function Vans() {
-  const [vans, setVans] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
+  // const [vans, setVans] = useState([]);
+  // const [loading, setLoading] = useState(false);
+  // const [error, setError] = useState(null);
   const [searchParams, setSearchParams] = useSearchParams();
   const typeFilter = searchParams.get("type");
+  const vans = useLoaderData();
 
-  useEffect(() => {
-    async function loadVans() {
-      setLoading(true);
-      try {
-        const data = await getVans();
-        setVans(data);
-      } catch (err) {
-        setError(err);
-      } finally {
-        setLoading(false);
-      }
-    }
-    loadVans();
-  }, []);
+  // useEffect(() => {
+  //   async function loadVans() {
+  //     setLoading(true);
+  //     try {
+  //       const data = await getVans();
+  //       setVans(data);
+  //     } catch (err) {
+  //       setError(err);
+  //     } finally {
+  //       setLoading(false);
+  //     }
+  //   }
+  //   loadVans();
+  // }, []);
 
   const displayedVans = typeFilter
     ? vans.filter((van) => van.type === typeFilter)
@@ -60,13 +65,13 @@ export default function Vans() {
     });
   }
 
-  if (loading) {
-    return <h1 aria-live="polite">Loading Vans...</h1>;
-  }
+  // if (loading) {
+  //   return <h1 aria-live="polite">Loading Vans...</h1>;
+  // }
 
-  if (error) {
-    return <h1 aria-live="assertive">There was error:{error.message}</h1>;
-  }
+  // if (error) {
+  //   return <h1 aria-live="assertive">There was error:{error.message}</h1>;
+  // }
 
   return (
     <div className="van-list-container">
